@@ -85,7 +85,7 @@ class VipConversation extends Conversation
         $this->bot = $bot;
         $this->user = User::where("telegram_chat_id", $telegramUser)->first();
 
-        if (is_null( $this->user))
+        if (is_null($this->user))
             $this->user = $this->createUser();
 
         $this->tmp_phone = "";
@@ -169,13 +169,40 @@ class VipConversation extends Conversation
                         "type_4" => $this->bot->userStorage()->get("type_4") ?? 'Не выбрано',
                     ];
 
+                    $tmp_order = $this->bot->userStorage()->get("type_0")?"Нужна реклама":"";
+                    $tmp_order .= $this->bot->userStorage()->get("type_1")?"Мне нужен чат-бот":"";
+                    $tmp_order .= $this->bot->userStorage()->get("type_2")?"Мне нужен веб-сайт":"";
+                    $tmp_order .= $this->bot->userStorage()->get("type_3")?"Мне нужно мобильное приложение":"";
+                    $tmp_order .= $this->bot->userStorage()->get("type_4")?"Другое":"";
+
                     OrderHistory::create([
                         'user_id' => $this->user->id,
                         'order_type' => json_encode($order_type),
                         'phone' => $this->tmp_phone,
                     ]);
 
+                    $message = sprintf("*Заявка на услугу IT (@it_rest_service_bot)*\nПерезвоните клиенту:%s %s\n*Тип услуги:*\n_%s_",
+                        ($this->user->name ?? $this->user->fio_from_telegram),
+                        $this->tmp_phone,
+                        $tmp_order
+                    );
+                    try {
+                        Telegram::sendMessage([
+                            'chat_id' => env("TELEGRAM_FASTORAN_ADMIN_CHANNEL"),
+                            'parse_mode' => 'Markdown',
+                            'text' => $message
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::error(sprintf("%s:%s %s",
+                            $e->getLine(),
+                            $e->getFile(),
+                            $e->getMessage()
+                        ));
+                    }
+
                     $this->bot->userStorage()->delete();
+
+
                     $this->mainMenu("Ваша заявка принята в рассмотрение");
                     return;
                 }
