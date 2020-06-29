@@ -184,7 +184,7 @@ class VipConversation extends Conversation
                     $message = sprintf("*Заявка на услугу IT (@it_rest_service_bot)*\nПерезвоните клиенту:%s %s\n*Тип услуги:*\n_%s_",
                         ($this->user->name ?? $this->user->fio_from_telegram),
                         $this->tmp_phone,
-                        $tmp_order
+                        (mb_strlen(trim($tmp_order))>0?$tmp_order:"Заявка на перезвон")
                     );
                     try {
                         Telegram::sendMessage([
