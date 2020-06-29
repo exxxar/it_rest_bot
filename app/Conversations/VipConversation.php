@@ -98,7 +98,7 @@ class VipConversation extends Conversation
                 $this->tmp_phone = $answer->getText();
                 $this->tmp_phone = str_replace($vowels, "", $this->tmp_phone);
                 if (strpos($this->tmp_phone, "+38") === false)
-                    $tmp_phone = "+38" . $this->tmp_phone;
+                    $this->tmp_phone = "+38" . $this->tmp_phone;
 
 
                 $pattern = "/^\+380\d{3}\d{2}\d{2}\d{2}$/";
