@@ -100,6 +100,7 @@ class VipConversation extends Conversation
                 if (strpos($this->tmp_phone, "+38") === false)
                     $this->tmp_phone = "+38" . $this->tmp_phone;
 
+                $this->bot->reply($this->tmp_phone);
 
                 $pattern = "/^\+380\d{3}\d{2}\d{2}\d{2}$/";
                 if (preg_match($pattern, $this->tmp_phone) == 0) {
