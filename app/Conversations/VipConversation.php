@@ -128,11 +128,14 @@ class VipConversation extends Conversation
     public function askOrderType()
     {
 
+        $this->bot->reply("test 1");
         $type_0 = $this->bot->userStorage()->get("type_0") ?? null;
         $type_1 = $this->bot->userStorage()->get("type_1") ?? null;
         $type_2 = $this->bot->userStorage()->get("type_2") ?? null;
         $type_3 = $this->bot->userStorage()->get("type_3") ?? null;
         $type_4 = $this->bot->userStorage()->get("type_4") ?? null;
+
+        $this->bot->reply("test 2");
 
         $question = Question::create('Выберите какие именно услуги Вас интересуют?')
             ->fallback('Unable to create a new database')
