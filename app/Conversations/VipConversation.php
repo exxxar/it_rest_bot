@@ -84,6 +84,10 @@ class VipConversation extends Conversation
         $telegramUser = $bot->getUser()->getId();
         $this->bot = $bot;
         $this->user = User::where("telegram_chat_id", $telegramUser)->first();
+
+        if (is_null( $this->user))
+            $this->user = $this->createUser();
+
         $this->tmp_phone = "";
     }
 
