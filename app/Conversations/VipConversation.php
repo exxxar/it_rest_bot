@@ -3,9 +3,11 @@
 namespace App\Conversations;
 
 use App\CashBackHistory;
+use App\OrderHistory;
 use App\User;
 use BotMan\BotMan\Messages\Conversations\Conversation;
 use BotMan\BotMan\Messages\Incoming\Answer;
+use BotMan\BotMan\Messages\Outgoing\Actions\Button;
 use BotMan\BotMan\Messages\Outgoing\Question;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -15,6 +17,7 @@ class VipConversation extends Conversation
 {
     protected $bot;
     protected $user;
+    protected $tmp_phone;
 
     public function createUser()
     {
@@ -41,26 +44,26 @@ class VipConversation extends Conversation
         return $user;
     }
 
-    function mainMenu( $message)
+    function mainMenu($message)
     {
         $telegramUser = $this->bot->getUser();
         $id = $telegramUser->getId();
 
-        $user = User::where("telegram_chat_id",$id)->first();
+        $user = User::where("telegram_chat_id", $id)->first();
 
         if (is_null($user))
-            $user=$this->createUser();
+            $user = $this->createUser();
 
 
         $keyboard = [];
 
         array_push($keyboard, ["\xF0\x9F\x8D\xB1Наши услуги"]);
         array_push($keyboard, ["\xE2\x9A\xA1Заявка на услугу"]);
-        array_push($keyboard,["\xF0\x9F\x8E\xB0Розыгрыш"]);
-        array_push($keyboard,["\xF0\x9F\x92\xADО Нас"]);
+        array_push($keyboard, ["\xF0\x9F\x8E\xB0Розыгрыш"]);
+        array_push($keyboard, ["\xF0\x9F\x92\xADО Нас"]);
 
         if ($user->is_admin)
-            array_push($keyboard,["\xE2\x9A\xA0Админ. статистика"]);
+            array_push($keyboard, ["\xE2\x9A\xA0Админ. статистика"]);
 
 
         $this->bot->sendRequest("sendMessage",
@@ -92,60 +95,92 @@ class VipConversation extends Conversation
         try {
             $this->ask($question, function (Answer $answer) {
                 $vowels = array("(", ")", "-", " ");
-                $tmp_phone = $answer->getText();
-                $tmp_phone = str_replace($vowels, "", $tmp_phone);
-                if (strpos($tmp_phone, "+38") === false)
-                    $tmp_phone = "+38" . $tmp_phone;
+                $this->tmp_phone = $answer->getText();
+                $this->tmp_phone = str_replace($vowels, "", $this->tmp_phone);
+                if (strpos($this->tmp_phone, "+38") === false)
+                    $tmp_phone = "+38" . $this->tmp_phone;
 
-                Log::info("phone=$tmp_phone");
 
                 $pattern = "/^\+380\d{3}\d{2}\d{2}\d{2}$/";
-                if (preg_match($pattern, $tmp_phone) == 0) {
+                if (preg_match($pattern, $this->tmp_phone) == 0) {
                     $this->bot->reply("Номер введен не верно...\n");
                     $this->askPhone();
                     return;
                 } else {
-                    $tmp_user = User::where("phone", $tmp_phone)->first();
 
-                    if (!is_null($tmp_user)) {
-
-                        if (!is_null($tmp_user->telegram_chat_id)) {
-                            $this->bot->reply("Данный номер уже связан с учетной записью телеграм!\n");
-                            $this->askPhone();
-                            return;
-                        }
-                        $telegramUser = $this->bot->getUser();
-                        $id = $telegramUser->getId();
-
-                        $tmp_user->telegram_chat_id = $id;
-                        $tmp_user->save();
-
+                    if (is_null($this->user->phone)) {
+                        $this->user->phone = $this->tmp_phone;
+                        $this->user->is_vip = true;
+                        $this->user->save();
                     }
 
-
-                    $this->user->phone = $tmp_phone;
-                    $this->user->is_vip = true;
-                    $this->user->save();
-
-
-                    CashBackHistory::create([
-                        'amount' => 0.3,
-                        'bill_number' => 'Подарок за регистрацию',
-                        'money_in_bill' => 0,
-                        'cash_in_bill' => 0,
-                        'employee_id' => null,
-                        'user_id' => $this->user->id,
-                        'type' => 0,
-                    ]);
-
-                    $this->mainMenu("Ваша заявка принята в рассмотрение");
+                    $this->askOrderType();
+                    return;
 
                 }
 
             });
-        }catch (\Exception $e){
-            $this->bot->reply("Упс... ошибка...".$e->getMessage()." ".$e->getLine());
+        } catch (\Exception $e) {
+            $this->bot->reply("Упс... ошибка..." . $e->getMessage() . " " . $e->getLine());
         }
+    }
+
+    public function askOrderType()
+    {
+
+        $type_0 = $this->bot->userStorage()->get("type_0") ?? null;
+        $type_1 = $this->bot->userStorage()->get("type_1") ?? null;
+        $type_2 = $this->bot->userStorage()->get("type_2") ?? null;
+        $type_3 = $this->bot->userStorage()->get("type_3") ?? null;
+        $type_4 = $this->bot->userStorage()->get("type_4") ?? null;
+
+        $question = Question::create('Выберите какие именно услуги Вас интересуют?')
+            ->fallback('Unable to create a new database')
+            ->callbackId('create_database')
+            ->addButtons([
+                Button::create(is_null($type_0) ? 'Мне нужна реклама' : "\xE2\x9C\x85Мне нужна реклама")->value('type_0'),
+                Button::create(is_null($type_1) ? 'Мне нужен чат-бот' : "\xE2\x9C\x85Мне нужен чат-бот")->value('type_1'),
+                Button::create(is_null($type_2) ? 'Мне нужен веб-сайт' : "\xE2\x9C\x85Мне нужен веб-сайт")->value('type_2'),
+                Button::create(is_null($type_3) ? 'Мне нужно мобильное приложение' : "\xE2\x9C\x85Мне нужно мобильное приложение")->value('type_3'),
+                Button::create(is_null($type_4) ? 'Другое' : "\xE2\x9C\x85Другое")->value('type_4'),
+                Button::create("Завершить выбор")->value('stop'),
+            ]);
+
+        $this->ask($question, function (Answer $answer) {
+            // Detect if button was clicked:
+            if ($answer->isInteractiveMessageReply()) {
+                $selectedValue = $answer->getValue(); // will be either 'yes' or 'no'
+
+                if ($selectedValue == "stop") {
+                    $order_type = [
+                        "type_0" => $this->bot->userStorage()->get("type_0") ?? 'Не выбрано',
+                        "type_1" => $this->bot->userStorage()->get("type_1") ?? 'Не выбрано',
+                        "type_2" => $this->bot->userStorage()->get("type_2") ?? 'Не выбрано',
+                        "type_3" => $this->bot->userStorage()->get("type_3") ?? 'Не выбрано',
+                        "type_4" => $this->bot->userStorage()->get("type_4") ?? 'Не выбрано',
+                    ];
+
+                    OrderHistory::create([
+                        'user_id' => $this->user->id,
+                        'order_type' => json_decode($order_type),
+                        'phone' => $this->tmp_phone,
+                    ]);
+
+                    $this->mainMenu("Ваша заявка принята в рассмотрение");
+                    return;
+                }
+
+                $type = $this->bot->userStorage()->get($selectedValue) ?? null;
+
+                $this->bot->userStorage()->save([
+                    "$selectedValue" => is_null($type) ? true : ($type == true ? false : true)
+                ]);
+
+                $this->askOrderType();
+
+                return;
+            }
+        });
     }
 
     /**
