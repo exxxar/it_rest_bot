@@ -34,7 +34,6 @@ class VipConversation extends Conversation
                 'telegram_chat_id' => $id,
                 'is_admin' => false,
                 'is_vip' => false,
-                'cashback_beer' => 0,
                 'cashback_money' => 0,
                 'phone' => '',
                 'birthday' => '',
@@ -53,18 +52,16 @@ class VipConversation extends Conversation
             $user=$this->createUser();
 
 
-        $keyboard = [
+        $keyboard = [];
 
-        ];
-
-        array_push($keyboard, ["\xF0\x9F\x8D\xB1Новое меню"]);
-        if (!$user->is_vip)
-            array_push($keyboard, ["\xE2\x9A\xA1Анкета VIP-пользователя"]);
-        else
-            array_push($keyboard, ["\xE2\x9A\xA1Special BeerBack system"]);
-
+        array_push($keyboard, ["\xF0\x9F\x8D\xB1Наши услуги"]);
+        array_push($keyboard, ["\xE2\x9A\xA1Заявка на услугу"]);
         array_push($keyboard,["\xF0\x9F\x8E\xB0Розыгрыш"]);
         array_push($keyboard,["\xF0\x9F\x92\xADО Нас"]);
+
+        if ($user->is_admin)
+            array_push($keyboard,["\xE2\x9A\xA0Админ. статистика"]);
+
 
         $this->bot->sendRequest("sendMessage",
             [
@@ -128,7 +125,6 @@ class VipConversation extends Conversation
 
                     $this->user->phone = $tmp_phone;
                     $this->user->is_vip = true;
-                    $this->user->cashback_beer += 0.3;
                     $this->user->save();
 
 
@@ -136,15 +132,13 @@ class VipConversation extends Conversation
                         'amount' => 0.3,
                         'bill_number' => 'Подарок за регистрацию',
                         'money_in_bill' => 0,
-                        'bear_in_bill' => 0,
+                        'cash_in_bill' => 0,
                         'employee_id' => null,
                         'user_id' => $this->user->id,
                         'type' => 0,
                     ]);
 
-                    $this->bot->reply("Вам начислено 0.3 литра пива!");
-
-                    $this->mainMenu("Теперь Вы VIP-пользователь и у вас есть возможность накапливать пивные литры в системе BeerBack!");
+                    $this->mainMenu("Ваша заявка принята в рассмотрение");
 
                 }
 
