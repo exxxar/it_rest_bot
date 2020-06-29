@@ -146,6 +146,7 @@ class VipConversation extends Conversation
             ->fallback('Unable to create a new database')
             ->callbackId('create_database')
             ->addButtons([
+                Button::create("\xF0\x9F\x93\x9EПерезвоните мне!")->value('stop'),
                 Button::create(is_null($type_0) ? 'Мне нужна реклама' : "\xE2\x9C\x85Мне нужна реклама")->value('type_0'),
                 Button::create(is_null($type_1) ? 'Мне нужен чат-бот' : "\xE2\x9C\x85Мне нужен чат-бот")->value('type_1'),
                 Button::create(is_null($type_2) ? 'Мне нужен веб-сайт' : "\xE2\x9C\x85Мне нужен веб-сайт")->value('type_2'),

@@ -164,7 +164,7 @@ $botman->hears('/more_details', function ($bot) {
     $bot->sendRequest("sendMessage",
         [
             "chat_id" => "$id",
-            "text" => "Наше портфолио",
+            "text" => "*Наше портфолио*\n_Мы представляем вам все основные наши услуги. Однако есть и то что не вошло в этот перечень. Дополнительно информацию вы можете узнать отправив заявку на услугу!_",
             "parse_mode" => "Markdown",
             'reply_markup' => json_encode([
                 'inline_keyboard' =>
