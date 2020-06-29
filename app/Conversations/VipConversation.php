@@ -96,25 +96,27 @@ class VipConversation extends Conversation
         try {
             $this->ask($question, function (Answer $answer) {
                 $vowels = array("(", ")", "-", " ");
-                $this->tmp_phone = $answer->getText();
-                $this->tmp_phone = str_replace($vowels, "", $this->tmp_phone);
-                if (strpos($this->tmp_phone, "+38") === false)
-                    $this->tmp_phone = "+38" . $this->tmp_phone;
 
+                $tmp_phone = $answer->getText();
+                $tmp_phone = str_replace($vowels, "", $tmp_phone);
+                if (strpos($tmp_phone, "+38") === false)
+                    $tmp_phone = "+38" . $tmp_phone;
 
 
                 $pattern = "/^\+380\d{3}\d{2}\d{2}\d{2}$/";
-                if (preg_match($pattern, $this->tmp_phone) == 0) {
+                if (preg_match($pattern, $tmp_phone) == 0) {
                     $this->bot->reply("Номер введен не верно...\n");
                     $this->askPhone();
                     return;
                 } else {
 
-                    if (is_null($this->user->phone)) {
-                        $this->user->phone = $this->tmp_phone;
+                    if (is_null($this->user->phone) || strlen(trim($this->user->phone)) == 0) {
+                        $this->user->phone = $tmp_phone;
                         $this->user->is_vip = true;
                         $this->user->save();
                     }
+
+                    $this->tmp_phone = $tmp_phone;
 
                     $this->askOrderType();
                     return;
@@ -130,14 +132,11 @@ class VipConversation extends Conversation
     public function askOrderType()
     {
 
-        $this->bot->reply("test 1");
         $type_0 = $this->bot->userStorage()->get("type_0") ?? null;
         $type_1 = $this->bot->userStorage()->get("type_1") ?? null;
         $type_2 = $this->bot->userStorage()->get("type_2") ?? null;
         $type_3 = $this->bot->userStorage()->get("type_3") ?? null;
         $type_4 = $this->bot->userStorage()->get("type_4") ?? null;
-
-        $this->bot->reply("test 2");
 
         $question = Question::create('Выберите какие именно услуги Вас интересуют?')
             ->fallback('Unable to create a new database')
@@ -148,7 +147,7 @@ class VipConversation extends Conversation
                 Button::create(is_null($type_2) ? 'Мне нужен веб-сайт' : "\xE2\x9C\x85Мне нужен веб-сайт")->value('type_2'),
                 Button::create(is_null($type_3) ? 'Мне нужно мобильное приложение' : "\xE2\x9C\x85Мне нужно мобильное приложение")->value('type_3'),
                 Button::create(is_null($type_4) ? 'Другое' : "\xE2\x9C\x85Другое")->value('type_4'),
-                Button::create("Завершить выбор")->value('stop'),
+                Button::create("\xF0\x9F\x9A\xA9Завершить выбор")->value('stop'),
             ]);
 
         $this->ask($question, function (Answer $answer) {
@@ -167,10 +166,11 @@ class VipConversation extends Conversation
 
                     OrderHistory::create([
                         'user_id' => $this->user->id,
-                        'order_type' => json_decode($order_type),
+                        'order_type' => json_encode($order_type),
                         'phone' => $this->tmp_phone,
                     ]);
 
+                    $this->bot->userStorage()->delete();
                     $this->mainMenu("Ваша заявка принята в рассмотрение");
                     return;
                 }
@@ -178,7 +178,7 @@ class VipConversation extends Conversation
                 $type = $this->bot->userStorage()->get($selectedValue) ?? null;
 
                 $this->bot->userStorage()->save([
-                    "$selectedValue" => is_null($type) ? true : ($type == true ? false : true)
+                    "$selectedValue" => is_null($type) ? true : ($type == true ? null : true)
                 ]);
 
                 $this->askOrderType();
@@ -195,16 +195,6 @@ class VipConversation extends Conversation
      */
     public function run()
     {
-        //
-        if (is_null($this->user)) {
-            $this->askPhone();
-            return;
-        }
-
-        if (!$this->user->is_vip) {
-            $this->askPhone();
-            return;
-        }
-
+        $this->askPhone();
     }
 }

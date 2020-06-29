@@ -15,5 +15,16 @@ class DatabaseSeeder extends Seeder
         $this->call(PrizeTableSeeder::class);
      //   $this->call(PromocodeTableSeeder::class);
 
+
+        \App\Product::truncate();
+
+        \App\Product::create([
+            "article_url"=>"https://telegra.ph/Razrabotka-veb-sajtov-06-29"
+        ]);
+
+        \App\Product::create([
+            "article_url"=>"https://telegra.ph/Razrabotka-telegram-botov-06-29"
+        ]);
+
     }
 }

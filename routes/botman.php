@@ -93,7 +93,7 @@ $botman->hears('.*Админ. статистика', function ($bot) {
     $bot->reply($message);
 
 })->stopsConversation();
-$botman->hears(".*Заявка на услугу|/do_vip", BotManController::class . "@vipConversation");
+$botman->hears(".*Заявка на услугу|/do_vip", BotManController::class . "@vipConversation")->stopsConversation();
 $botman->hears('.*Розыгрыш', function ($bot) {
     $telegramUser = $bot->getUser();
     $id = $telegramUser->getId();
@@ -118,10 +118,10 @@ $botman->hears('.*Розыгрыш', function ($bot) {
         ]);
 })->stopsConversation();
 $botman->hears('.*О нас', function ($bot) {
-    $bot->reply("https://telegra.ph/O-Nas-06-23");
+    $bot->reply("https://telegra.ph/O-Komande-06-29");
 })->stopsConversation();
 
-$botman->hears("/start ([0-9a-zA-Z=]+)", BotManController::class . '@startDataConversation');
+$botman->hears("/start ([0-9a-zA-Z=]+)", BotManController::class . '@startDataConversation')->stopsConversation();
 $botman->hears('/start', function ($bot) {
     createUser($bot);
     mainMenu($bot, 'Главное меню');
@@ -139,7 +139,7 @@ $botman->hears('.*Наши услуги', function ($bot) {
     $bot->sendRequest("sendMessage",
         [
             "chat_id" => "$id",
-            "text" => "https://telegra.ph/Menyu-06-23-2",
+            "text" => "https://telegra.ph/Razrabotka-veb-sajtov-06-29",
             "parse_mode" => "Markdown",
             'reply_markup' => json_encode([
                 'inline_keyboard' =>
